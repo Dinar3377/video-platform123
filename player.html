@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <title>HLS Player</title>
+</head>
+<body style="margin:0; padding:20px; font-family:sans-serif; background:#111; color:#eee;">
+  <h2>🎥 Видео</h2>
+  <video id="video" controls autoplay style="width:100%; max-width:900px; border-radius:10px; background:#000;"></video>
+
+  <p id="status"></p>
+
+  <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+  <script>
+    const params = new URLSearchParams(window.location.search);
+    const videoId = params.get("video");
+    const token = params.get("token");
+    const statusEl = document.getElementById("status");
+    const video = document.getElementById("video");
+
+    if (!videoId || !token) {
+      statusEl.innerText = "❌ Отсутствует параметр video или token.";
+    } else {
+      const hlsUrl = `/api/stream?file=playlist.m3u8&video=${encodeURIComponent(videoId)}&token=${encodeURIComponent(token)}`;
+
+      if (Hls.isSupported()) {
+        const hls = new Hls();
+        hls.loadSource(hlsUrl);
+        hls.attachMedia(video);
+        hls.on(Hls.Events.MANIFEST_PARSED, () => {
+          video.play().catch(() => {});
+        });
+      } else if (video.canPlayType("application/vnd.apple.mpegurl")) {
+        video.src = hlsUrl;
+        video.addEventListener("loadedmetadata", () => {
+          video.play().catch(() => {});
+        });
+      } else {
+        statusEl.innerText = "❌ Ваш браузер не поддерживает HLS.";
+      }
+    }
+  </script>
+</body>
+</html>
